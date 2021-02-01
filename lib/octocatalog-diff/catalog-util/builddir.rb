@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'uri'
 require 'yaml'
 
 require_relative '../facts'
@@ -112,7 +113,10 @@ module OctocatalogDiff
         puppetdb_conf = File.join(@tempdir, 'puppetdb.conf')
         File.open(puppetdb_conf, 'w') do |f|
           f.write "[main]\n"
-          f.write "server_urls = #{server_urls}\n"
+          #f.write "server_urls = #{server_urls}\n"
+          uri = URI.parse(server_urls.split(',').first)
+          f.write "server = #{uri.host}\n"
+          f.write "port = #{uri.port}\n"
           f.write "server_url_timeout = #{server_url_timeout}\n"
         end
         logger.debug("Installed puppetdb.conf file at #{puppetdb_conf}")
