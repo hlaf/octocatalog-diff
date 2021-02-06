@@ -13,7 +13,20 @@ node('docker-slave') {
 	checkout(scm)
   }
 
+  stage('Assemble') {
+
+    sh '''#!/bin/bash -l
+	shopt -s expand_aliases # required by the bundle command on Windows
+
+	module load ruby
+    bundle install --path .local_bundles
+    bundle exec rake gem:build
+    '''
+
+  }
+  
   stage('Release') {
 	uploadToArtifactRepository(artifact_repo_url, artifact_repo_creds)
   }
+
 }
