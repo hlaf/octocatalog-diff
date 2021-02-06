@@ -7,7 +7,7 @@ domain_name  = getDnsDomainName()
 artifact_repo_url = "http://nexus.${domain_name}:8082/repository/emt-gems-internal/"
 artifact_repo_creds = 'nexus-credentials'
 
-node('docker-slave') {
+node('linux') {
 
   stage('Checkout') {
 	checkout(scm)
