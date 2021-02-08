@@ -9,23 +9,23 @@ artifact_repo_creds = 'nexus-credentials'
 
 node('linux') {
 
-  stage('Checkout') {
+  stage('commit.checkout') {
 	checkout(scm)
   }
 
-  stage('Assemble') {
+  stage('commit.assemble') {
 
     sh '''#!/bin/bash -l
 	shopt -s expand_aliases # required by the bundle command on Windows
 
-	module load ruby
-    bundle install --path .local_bundles
-    bundle exec rake gem:build
+	module load rvm
+	rvm use 2.3.8
+    gem build *.gemspec
     '''
 
   }
   
-  stage('Release') {
+  stage('release') {
 	uploadToArtifactRepository(artifact_repo_url, artifact_repo_creds)
   }
 
