@@ -26,7 +26,15 @@ node('linux') {
   }
   
   stage('release') {
-	uploadToArtifactRepository(artifact_repo_url, artifact_repo_creds)
+    withCredentials([usernameColonPassword(
+			credentialsId: artifact_repo_creds,
+			variable: 'NEXUS_CREDENTIALS')]) {
+			sh """#!/bin/bash -l
+			  module load rvm
+			  rvm use 2.3.8@nexus
+	          gem nexus --url ${artifact_repo_url} --credential \$NEXUS_CREDENTIALS *.gem
+			"""
+	}
   }
 
 }
