@@ -15,9 +15,8 @@ node('docker-slave') {
   }
 
   stage('commit.assemble') {
-    sh """docker run -t --volumes-from $DOCKER_CONTAINER_ID $build_tools_image \
-      /bin/sh -c 'cd ${env.WORKSPACE} && \
-                  gem build *.gemspec'
+    sh """docker run -t --volumes-from $DOCKER_CONTAINER_ID -w ${env.WORKSPACE} $build_tools_image \
+      /bin/sh -c 'gem build *.gemspec'
     """
   }
 
@@ -26,9 +25,8 @@ node('docker-slave') {
 			credentialsId: artifact_repo_creds,
 			variable: 'NEXUS_CREDENTIALS')]) {
 
-		    sh """docker run -t --volumes-from $DOCKER_CONTAINER_ID $build_tools_image \
-              /bin/sh -c "cd ${env.WORKSPACE} && \
-                          gem install nexus && \
+		    sh """docker run -t --volumes-from $DOCKER_CONTAINER_ID -w ${env.WORKSPACE} $build_tools_image \
+              /bin/sh -c "gem install nexus && \
                           gem nexus --url ${artifact_repo_url} --credential \${NEXUS_CREDENTIALS} *.gem"
             """
 	}
