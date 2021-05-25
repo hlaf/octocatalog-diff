@@ -21,15 +21,15 @@ node('docker-slave') {
   }
 
   stage('release') {
-    withCredentials([usernameColonPassword(
-			credentialsId: artifact_repo_creds,
-			variable: 'NEXUS_CREDENTIALS')]) {
-
-		    sh """docker run -t --volumes-from $DOCKER_CONTAINER_ID -w ${env.WORKSPACE} $build_tools_image \
-              /bin/sh -c "gem install nexus && \
-                          gem nexus --url ${artifact_repo_url} --credential \${NEXUS_CREDENTIALS} *.gem"
-            """
-	}
+//    withCredentials([usernameColonPassword(
+//			credentialsId: artifact_repo_creds,
+//			variable: 'NEXUS_CREDENTIALS')]) {
+//
+//		    sh """docker run -t --volumes-from $DOCKER_CONTAINER_ID -w ${env.WORKSPACE} $build_tools_image \
+//              /bin/sh -c "gem install nexus && \
+//                          gem nexus --url ${artifact_repo_url} --credential \${NEXUS_CREDENTIALS} *.gem"
+//            """
+//	}
   }
 
 }
