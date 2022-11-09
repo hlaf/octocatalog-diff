@@ -11,6 +11,12 @@ module OctocatalogDiff
   class Catalog
     # Represents a Puppet catalog that is read from PuppetDB.
     class PuppetDB < OctocatalogDiff::Catalog
+      # Supporting multiple versions of the PuppetDB API.
+      PUPPETDB_QUERY_CATALOGS_URL = {
+        '3' => '/v3/catalogs/<NODE>',
+        '4' => '/pdb/query/v4/catalogs/<NODE>'
+      }.freeze
+
       # Constructor - See OctocatalogDiff::PuppetDB for additional parameters
       # @param :node [String] Node name
       # @param :retry [Integer] Number of retries, if fetch fails
@@ -31,7 +37,8 @@ module OctocatalogDiff
         puppetdb_obj = OctocatalogDiff::PuppetDB.new(@options)
 
         # Loop to retrieve catalog from PuppetDB
-        uri = "/pdb/query/v4/catalogs/#{@node}"
+        puppetdb_api_version = @options.fetch(:puppetdb_api_version, 4)
+        uri = PUPPETDB_QUERY_CATALOGS_URL.fetch(puppetdb_api_version.to_s).gsub('<NODE>', @node)
         retries = @options.fetch(:retry, 1)
         (retries + 1).times do
           @retries = -1 if @retries.nil?
