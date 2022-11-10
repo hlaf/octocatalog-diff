@@ -51,13 +51,19 @@ module OctocatalogDiff
             time_it_took = Time.now - time_start
 
             # Validate received catalog
-            raise "PuppetDB catalog for #{@node} failed: no 'resources' hash in object" unless result.key?('resources')
-            raise "PuppetDB catalog for #{@node} failed: 'resources' was not a hash" unless result['resources'].is_a?(Hash)
+            if puppetdb_api_version > 3
+              raise "PuppetDB catalog for #{@node} failed: no 'resources' hash in object" unless result.key?('resources')
+              raise "PuppetDB catalog for #{@node} failed: 'resources' was not a hash" unless result['resources'].is_a?(Hash)
+            end
             logger.debug "Catalog for #{@node} retrieved from PuppetDB in #{time_it_took} seconds"
 
             # Make this look like a generated catalog in Puppet 4.x
-            @catalog = result.merge('resources' => result['resources']['data'])
-            @catalog['resources'] = @catalog['resources'].map { |x| x.reject { |k, _v| k == 'resource' } }
+            if puppetdb_api_version > 3
+              @catalog = result.merge('resources' => result['resources']['data'])
+              @catalog['resources'] = @catalog['resources'].map { |x| x.reject { |k, _v| k == 'resource' } }
+            else
+              @catalog = result.merge('resources' => result['data']['resources'])
+            end
 
             # Set the other variables
             @catalog_json = ::JSON.generate(@catalog)
