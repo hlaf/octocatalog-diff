@@ -11,6 +11,12 @@ module OctocatalogDiff
   class Catalog
     # Represents a Puppet catalog that is read from PuppetDB.
     class PuppetDB < OctocatalogDiff::Catalog
+      # Supporting multiple versions of the PuppetDB API.
+      PUPPETDB_QUERY_CATALOGS_URL = {
+        '3' => '/v3/catalogs/<NODE>',
+        '4' => '/pdb/query/v4/catalogs/<NODE>'
+      }.freeze
+
       # Constructor - See OctocatalogDiff::PuppetDB for additional parameters
       # @param :node [String] Node name
       # @param :retry [Integer] Number of retries, if fetch fails
@@ -31,7 +37,8 @@ module OctocatalogDiff
         puppetdb_obj = OctocatalogDiff::PuppetDB.new(@options)
 
         # Loop to retrieve catalog from PuppetDB
-        uri = "/pdb/query/v4/catalogs/#{@node}"
+        puppetdb_api_version = @options.fetch(:puppetdb_api_version, 4)
+        uri = PUPPETDB_QUERY_CATALOGS_URL.fetch(puppetdb_api_version.to_s).gsub('<NODE>', @node)
         retries = @options.fetch(:retry, 1)
         (retries + 1).times do
           @retries = -1 if @retries.nil?
@@ -44,13 +51,19 @@ module OctocatalogDiff
             time_it_took = Time.now - time_start
 
             # Validate received catalog
-            raise "PuppetDB catalog for #{@node} failed: no 'resources' hash in object" unless result.key?('resources')
-            raise "PuppetDB catalog for #{@node} failed: 'resources' was not a hash" unless result['resources'].is_a?(Hash)
+            if puppetdb_api_version > 3
+              raise "PuppetDB catalog for #{@node} failed: no 'resources' hash in object" unless result.key?('resources')
+              raise "PuppetDB catalog for #{@node} failed: 'resources' was not a hash" unless result['resources'].is_a?(Hash)
+            end
             logger.debug "Catalog for #{@node} retrieved from PuppetDB in #{time_it_took} seconds"
 
             # Make this look like a generated catalog in Puppet 4.x
-            @catalog = result.merge('resources' => result['resources']['data'])
-            @catalog['resources'] = @catalog['resources'].map { |x| x.reject { |k, _v| k == 'resource' } }
+            if puppetdb_api_version > 3
+              @catalog = result.merge('resources' => result['resources']['data'])
+              @catalog['resources'] = @catalog['resources'].map { |x| x.reject { |k, _v| k == 'resource' } }
+            else
+              @catalog = result.merge('resources' => result['data']['resources'])
+            end
 
             # Set the other variables
             @catalog_json = ::JSON.generate(@catalog)
