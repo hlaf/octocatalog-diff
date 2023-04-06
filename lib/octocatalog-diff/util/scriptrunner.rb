@@ -58,8 +58,11 @@ module OctocatalogDiff
 
         @stdout, @stderr, status = Open3.capture3(env, cmdline, unsetenv_others: true, chdir: working_dir)
         @exitcode = status.exitstatus
+        @stdout = sanitize_encoding(@stdout, logger)
+        @stderr = sanitize_encoding(@stderr, logger)
 
         @stderr.split(/\n/).select { |line| line =~ /\S/ }.each { |line| log(:debug, "STDERR: #{line}", logger) }
+
         log(:debug, "Exit status: #{@exitcode}", logger)
         return @stdout if @exitcode.zero?
         raise ScriptException, output
@@ -84,6 +87,12 @@ module OctocatalogDiff
       def log(priority, message, logger = @logger)
         return unless logger
         logger.send(priority, [message])
+      end
+
+      def sanitize_encoding(text, logger)
+        text.chars.select(&:valid_encoding?).join.tap do |sanitized| 
+          logger.send(:warn, 'The command output contains non-UTF8 characters') if sanitized != text
+        end
       end
 
       # PRIVATE: Create a temporary file with the contents of the script and mark the script executable.
