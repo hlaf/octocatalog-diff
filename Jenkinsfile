@@ -8,7 +8,7 @@ artifact_repo_url = "http://nexus.${domain_name}:8082/repository/emt-gems-intern
 artifact_repo_creds = 'nexus-credentials'
 build_tools_image = 'ruby:2.7.0'
 
-node('docker-slave') {
+node('docker-cloud-agent') {
 
   stage('commit.checkout') {
 	checkout(scm)
